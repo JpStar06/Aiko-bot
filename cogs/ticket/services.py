@@ -118,36 +118,36 @@ async def editar_ticket(
 # -------------------- SALVAR PAINEL -------------------- #
 async def salvar_painel(ticket_id, message_id, channel_id):
 
-    conn = await get_connection()
+    pool = get_connection()
 
-    await conn.execute(
-        """
-        UPDATE tickets
-        SET message_id=$1,
-            panel_channel_id=$2
-        WHERE id=$3
-        """,
-        message_id,
-        channel_id,
-        ticket_id
-    )
+    async with pool.acquire() as conn:
 
-    await conn.close()
+        await conn.execute(
+            """
+            UPDATE tickets
+            SET message_id=$1,
+                panel_channel_id=$2
+            WHERE id=$3
+            """,
+            message_id,
+            channel_id,
+            ticket_id
+        )
 
 
 # -------------------- BUSCAR PAINÉIS -------------------- #
 async def buscar_paineis():
 
-    conn = await get_connection()
+    pool = get_connection()
 
-    data = await conn.fetch(
-        """
-        SELECT id
-        FROM tickets
-        WHERE message_id IS NOT NULL
-        """
-    )
+    async with pool.acquire() as conn:
 
-    await conn.close()
+        data = await conn.fetch(
+            """
+            SELECT id
+            FROM tickets
+            WHERE message_id IS NOT NULL
+            """
+        )
 
-    return data
+        return data
