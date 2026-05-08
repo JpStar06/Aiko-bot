@@ -139,7 +139,16 @@ class Tickets(commands.Cog):
             if data["image"]:
                 embed.set_image(url=data["image"])
 
-            await canal.send(embed=embed, view=TicketOpenView(id))
+            msg = await canal.send(
+                embed=embed,
+                view=TicketOpenView(id)
+            )
+
+            await services.salvar_painel(
+                id,
+                msg.id,
+                canal.id
+            )
 
             await interaction.followup.send(
                 embed=embeds.acerto(

@@ -62,27 +62,32 @@ class TicketBuilderView(discord.ui.View):
     @discord.ui.button(label="✏️ Título", style=discord.ButtonStyle.primary)
     async def editar_titulo(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_modal(TitleModal(self))
+        custom_id="ticket_edit_title"
 
     @discord.ui.button(label="📝 Descrição", style=discord.ButtonStyle.secondary)
     async def editar_desc(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_modal(DescModal(self))
+        custom_id="ticket_edit_desc"
 
     @discord.ui.button(label="🎨 Cor", style=discord.ButtonStyle.success)
     async def editar_cor(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_modal(ColorModal(self))
+        custom_id="ticket_edit_color"
 
     @discord.ui.button(label="🖼️ Imagem", style=discord.ButtonStyle.secondary)
     async def editar_img(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_modal(ImageModal(self))
+        custom_id="ticket_edit_image"
 
     @discord.ui.button(label="👮 Atendente", style=discord.ButtonStyle.secondary)
     async def editar_staff(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_modal(StaffModal(self))
+        custom_id="ticket_edit_cargo"
 
     # -------------------- SALVAR -------------------- #
     @discord.ui.button(label="💾 Salvar", style=discord.ButtonStyle.green)
     async def salvar(self, interaction: discord.Interaction, button: discord.ui.Button):
-
+        
         try:
             await services.editar_ticket(
                 interaction.guild.id,
@@ -104,6 +109,7 @@ class TicketBuilderView(discord.ui.View):
                 f"❌ Erro ao salvar: {e}",
                 ephemeral=True
             )
+        custom_id="ticket_edit_title"
 
 class TicketOpenView(discord.ui.View):
     def __init__(self, ticket_id: int):
@@ -111,9 +117,10 @@ class TicketOpenView(discord.ui.View):
         self.ticket_id = ticket_id
 
     @discord.ui.button(
-        label="🎫 Abrir Ticket",
-        style=discord.ButtonStyle.green,
-        custom_id="ticket_open_private"
+        label="Abrir Ticket",
+        style=discord.ButtonStyle.primary,
+        emoji="🎫",
+        custom_id="ticket_open"
     )
     async def abrir_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
 
