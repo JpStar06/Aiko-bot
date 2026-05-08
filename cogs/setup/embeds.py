@@ -174,10 +174,12 @@ def tutorial_embed3():
     return embed4
 
 def setupfinal():
-    embed4 = discord.Embed(
+    embed5 = discord.Embed(
         title="**Sobre esse chat**",
         description=(
             "O use como painel de comandos para os comandos de tickets e embeds"
         ),
         color=discord.Color.pink()
     )
+
+    embed5.set_footer(text="Aiko • Chat de cmd")
