@@ -17,7 +17,7 @@ class SetupCog(commands.Cog):
         guild = interaction.guild
 
         # 📁 procurar canal
-        channel = discord.utils.get(guild.text_channels, name="aiko-tuto")
+        channel = discord.utils.get(guild.text_channels, name="aiko-painel")
 
         # 📁 criar se não existir
         if not channel:
@@ -29,7 +29,7 @@ class SetupCog(commands.Cog):
             }
 
             channel = await guild.create_text_channel(
-                name="aiko-tuto",
+                name="aiko-painel",
                 overwrites=overwrites
             )
 
@@ -45,6 +45,7 @@ class SetupCog(commands.Cog):
         await channel.send(embed=embeds.tutorial_embed())
         await channel.send(embed=embeds.tutorial_embed2())
         await channel.send(embed=embeds.tutorial_embed3())
+        await channel.send(embed=embeds.setupfinal())
 
         await interaction.followup.send(
             f"✅ Setup concluído em {channel.mention}",

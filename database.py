@@ -50,7 +50,9 @@ async def init_db():
             titulo_cliente TEXT,
             descricao_cliente TEXT,
             cor_cliente INTEGER,
-            imagem_cliente TEXT
+            imagem_cliente TEXT,
+            message_id BIGINT,
+            panel_channel_id BIGINT
         )
         """)
 
