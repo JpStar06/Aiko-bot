@@ -105,7 +105,7 @@ class Tickets(commands.Cog):
             )
 
         except Exception as e:
-            await interaction.followup.send(f"❌ Erro: {e}")
+            await interaction.followup.send(embed=embeds.erro(f"❌ Erro: {e}"))
     # -------------------- ENVIAR -------------------- #
     @tickets.command(name="enviar", description="envia o ticket para um canal")
     @app_commands.checks.has_permissions(administrator=True)
@@ -157,7 +157,7 @@ class Tickets(commands.Cog):
             )
 
         except Exception as e:
-            await interaction.followup.send(f"❌ Erro: {e}")
+            await interaction.followup.send(embed=embeds.erro(f"❌ Erro: {e}"))
 
 
 # -------------------- SETUP -------------------- #

@@ -19,6 +19,7 @@ class TicketBuilderView(discord.ui.View):
 
         self.author = author
         self.ticket_id = ticket_id
+        self.state = "embed1" # para controlar qual parte do embed está editando
 
         self.title = "Título"
         self.description = "Descrição"
@@ -87,21 +88,32 @@ class TicketBuilderView(discord.ui.View):
 
     @discord.ui.button(label="embed 2", style=discord.ButtonStyle.secondary)
     async def embed_2(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_modal(embed_2Modal(self))
+        self.state = "embed2"
     # -------------------- SALVAR -------------------- #
     @discord.ui.button(label="💾 Salvar", style=discord.ButtonStyle.green)
     async def salvar(self, interaction: discord.Interaction, button: discord.ui.Button):
         
         try:
-            await services.editar_ticket(
-                interaction.guild.id,
-                self.ticket_id,
-                self.title,
-                self.description,
-                self.color.value,  # 👈 salva como int
-                self.image,
-                self.staff_id  # 👈 salva staff
-            )
+            if self.state == "embed1":
+                await services.editar_ticket(
+                    interaction.guild.id,
+                    self.ticket_id,
+                    self.title,
+                    self.description,
+                    self.color.value,  # 👈 salva como int
+                    self.image,
+                    self.staff_id  # 👈 salva staff
+                )
+            elif self.state == "embed2":
+                await services.editar_ticket(
+                    interaction.guild.id,
+                    self.ticket_id,
+                    self.titulo_cliente,
+                    self.descricao_cliente,
+                    self.cor_cliente,
+                    self.image_cliente,
+                    self.staff_id
+                )
 
             await interaction.response.send_message(
                 f"✅ Ticket `{self.ticket_id}` atualizado!",
