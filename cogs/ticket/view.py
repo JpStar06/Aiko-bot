@@ -7,7 +7,8 @@ from .modals import (
     DescModal,
     ColorModal,
     ImageModal,
-    StaffModal
+    StaffModal,
+    embed_2Modal
 )
 from . import services
 
@@ -79,6 +80,9 @@ class TicketBuilderView(discord.ui.View):
     async def editar_staff(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_modal(StaffModal(self))
 
+    @discord.ui.button(label="embed 2", style=discord.ButtonStyle.secondary)
+    async def embed_2(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_modal(embed_2Modal(self))
     # -------------------- SALVAR -------------------- #
     @discord.ui.button(label="💾 Salvar", style=discord.ButtonStyle.green)
     async def salvar(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -105,6 +109,7 @@ class TicketBuilderView(discord.ui.View):
                 ephemeral=True
             )
 
+#---------sistema de tickets ----------#
 class TicketOpenView(discord.ui.View):
     def __init__(self, ticket_id: int):
         super().__init__(timeout=None)
@@ -175,7 +180,7 @@ class TicketOpenView(discord.ui.View):
             # 📩 embed do ticket
             embed = discord.Embed(
                 title=data["title"],
-                description=data["description"],
+                description="teste",
                 color=discord.Color(data["color"])
             )
 

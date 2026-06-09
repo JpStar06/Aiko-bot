@@ -12,7 +12,7 @@ class Comandos(commands.Cog):
         self.pool = None
     
     async def cog_load(self):
-        self.pool = await get_connection()  # Usa o pool asyncpg
+        self.pool = await get_connection()
 
     embed = app_commands.Group(name="embeds", description="Comandos de embeds")
 
@@ -56,7 +56,7 @@ class Comandos(commands.Cog):
         view.color = data["color"]
         view.image = data["image"]
 
-        view.embed_id = id  # 🔥 obrigatório
+        view.embed_id = id 
 
         await interaction.response.send_message(embed=view.build_embed(), view=view)
 
