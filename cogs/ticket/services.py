@@ -63,7 +63,7 @@ async def buscar_ticket(guild_id: int, ticket_id: int):
             "description": row["descricao"],
             "color": row["cor"],
             "image": row["imagem"],
-            "title_cliente": row["titulo_cliente"],
+            "titulo_cliente": row["titulo_cliente"],
             "descricao_cliente": row["descricao_cliente"],
             "cor_cliente": row["cor_cliente"],
             "image_cliente": row["imagem_cliente"],
