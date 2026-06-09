@@ -48,7 +48,7 @@ async def buscar_ticket(guild_id: int, ticket_id: int):
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
             """
-            SELECT titulo, descricao, cor, imagem, staff_id
+            SELECT titulo, descricao, cor, imagem, titulo_cliente, descricao_cliente, cor_cliente, imagem_cliente, staff_id
             FROM tickets
             WHERE id=$1 AND guild_id=$2
             """,
