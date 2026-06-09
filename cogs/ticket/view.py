@@ -186,9 +186,9 @@ class TicketOpenView(discord.ui.View):
 
             # 📩 embed do ticket
             embed = discord.Embed(
-                title=data["title"],
-                description="teste",
-                color=discord.Color(data["color"])
+                title=data["titulo_cliente"],
+                description=data["descricao_cliente"],
+                color=discord.Color(data["cor_cliente"])
             )
 
             if data["image"]:
