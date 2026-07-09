@@ -4,7 +4,7 @@ from discord.ext import commands
 from database import get_connection
 from . import services
 from . import embed
-from . import view
+from . import views
 
 class Ticket(commands.Cog):
     def __init__(self, bot):
@@ -44,8 +44,8 @@ class Ticket(commands.Cog):
     async def editar_embeds(self, interaction: discord.Interaction):
         data = await self.db.get_config(interaction.guild_id) or {}
  
-        view = view.DualEmbedEditorView(self.db, interaction.guild_id, data)
-        embed = view.build_embed_preview(data, view.current_embed)
+        view = views.DualEmbedEditorView(self.db, interaction.guild_id, data)
+        embed = views.build_embed_preview(data, view.current_embed)
  
         await interaction.response.send_message(
             content=f"**Editando: Embed {view.current_embed}**",

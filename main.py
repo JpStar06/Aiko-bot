@@ -4,7 +4,7 @@ import asyncio
 import os
 from dotenv import load_dotenv
 from database import init_db
-from cogs.ticket.view import TicketOpenView, CloseTicketView
+from cogs.ticket.views import TicketOpenView, CloseTicketView
 from cogs.ticket import services
 
 load_dotenv()
