@@ -114,9 +114,9 @@ async def editar_ticket(
             """
             UPDATE tickets
             SET titulo=$1, descricao=$2, cor=$3, imagem=$4, staff_id=$5, titulo_cliente=$6, descricao_cliente=$7, cor_cliente=$8, imagem_cliente=$9
-            WHERE id=$6 AND guild_id=$7
+            WHERE id=$10 AND guild_id=$11
             """,
-            titulo, descricao, cor, imagem, staff, ticket_id, guild_id
+            titulo, descricao, cor, imagem, staff, titulo_cliente, descricao_cliente, cor_cliente, imagem_cliente, ticket_id, guild_id
         )
 
         return {
