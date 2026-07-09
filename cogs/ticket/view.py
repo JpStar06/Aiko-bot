@@ -7,7 +7,7 @@ View responsável pelos botões:
 import discord
 from discord import ui
 
-from modals import EmbedEditModal
+from . import modals
 
 
 def build_embed_preview(data: dict, embed_type: int) -> discord.Embed:
@@ -65,7 +65,7 @@ class DualEmbedEditorView(ui.View):
 
     @ui.button(label="Editar Embed", style=discord.ButtonStyle.primary, emoji="✏️")
     async def edit_button(self, interaction: discord.Interaction, button: ui.Button):
-        modal = EmbedEditModal(
+        modal = modals.EmbedEditModal(
             db=self.db,
             guild_id=self.guild_id,
             embed_type=self.current_embed,
