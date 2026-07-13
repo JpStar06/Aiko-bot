@@ -94,26 +94,20 @@ class TicketBuilderView(discord.ui.View):
     async def salvar(self, interaction: discord.Interaction, button: discord.ui.Button):
         
         try:
-            if self.state == "embed1":
-                await services.editar_ticket(
-                    interaction.guild.id,
-                    self.ticket_id,
-                    self.title,
-                    self.description,
-                    self.color.value,  # 👈 salva como int
-                    self.image,
-                    self.staff_id  # 👈 salva staff
-                )
-            elif self.state == "embed2":
-                await services.editar_ticket(
-                    interaction.guild.id,
-                    self.ticket_id,
-                    self.titulo_cliente,
-                    self.descricao_cliente,
-                    self.cor_cliente,
-                    self.image_cliente,
-                    self.staff_id
-                )
+            await services.buscar_ticket(
+                interaction.guild.id,
+                self.ticket_id,
+                self.title,
+                self.description,
+                self.color.value,  # 👈 salva como int
+                self.image,
+                self.staff_id,  # 👈 salva staff
+                self.titulo_cliente,
+                self.descricao_cliente,
+                self.cor_cliente,
+                self.image_cliente,
+                self.staff_id,
+            )
 
             await interaction.response.send_message(
                 f"✅ Ticket `{self.ticket_id}` atualizado!",
