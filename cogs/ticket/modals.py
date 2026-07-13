@@ -86,14 +86,6 @@ class ImageModal(discord.ui.Modal, title="Imagem"):
             view=self.view
         )
 
-class embed_2Modal(discord.ui.Modal, title="embed 2"):
-    def __init__(self, view):
-        super().__init__()
-        self.view = view
-
-    async def on_submit(self, interaction: discord.Interaction):
-        await interaction.response.send_message("embed 2 em construção!", ephemeral=True)
-
 class StaffModal(discord.ui.Modal, title="Definir cargo staff"):
     cargo = discord.ui.TextInput(
         label="ID do cargo ou @menção",

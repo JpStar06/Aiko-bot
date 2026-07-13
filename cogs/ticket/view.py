@@ -7,8 +7,7 @@ from .modals import (
     DescModal,
     ColorModal,
     ImageModal,
-    StaffModal,
-    embed_2Modal
+    StaffModal
 )
 from . import services
 
@@ -19,17 +18,11 @@ class TicketBuilderView(discord.ui.View):
 
         self.author = author
         self.ticket_id = ticket_id
-        self.state = "embed1" # para controlar qual parte do embed está editando
 
         self.title = "Título"
         self.description = "Descrição"
         self.color = discord.Color.blue()
         self.image = None
-        self.titulo_cliente = "ESPERE SER ATENDIDO"
-        self.descricao_cliente = "Nossa equipe pode estar ocupada."
-        self.cor_cliente = discord.Color.red()
-        self.image_cliente = None
-
 
         self.staff_role = None
         self.staff_id = None
@@ -69,35 +62,27 @@ class TicketBuilderView(discord.ui.View):
     @discord.ui.button(label="✏️ Título", style=discord.ButtonStyle.primary)
     async def editar_titulo(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_modal(TitleModal(self))
-        custom_id="ticket_edit_title"
 
     @discord.ui.button(label="📝 Descrição", style=discord.ButtonStyle.secondary)
     async def editar_desc(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_modal(DescModal(self))
-        custom_id="ticket_edit_desc"
 
     @discord.ui.button(label="🎨 Cor", style=discord.ButtonStyle.success)
     async def editar_cor(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_modal(ColorModal(self))
-        custom_id="ticket_edit_color"
 
     @discord.ui.button(label="🖼️ Imagem", style=discord.ButtonStyle.secondary)
     async def editar_img(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_modal(ImageModal(self))
-        custom_id="ticket_edit_image"
 
     @discord.ui.button(label="👮 Atendente", style=discord.ButtonStyle.secondary)
     async def editar_staff(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_modal(StaffModal(self))
-        custom_id="ticket_edit_cargo"
 
-    @discord.ui.button(label="embed 2", style=discord.ButtonStyle.secondary)
-    async def embed_2(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.state = "embed2"
     # -------------------- SALVAR -------------------- #
     @discord.ui.button(label="💾 Salvar", style=discord.ButtonStyle.green)
     async def salvar(self, interaction: discord.Interaction, button: discord.ui.Button):
-        
+
         try:
             await services.editar_ticket(
                 interaction.guild.id,
@@ -106,12 +91,7 @@ class TicketBuilderView(discord.ui.View):
                 self.description,
                 self.color.value,  # 👈 salva como int
                 self.image,
-                self.staff_id,  # 👈 salva staff
-                self.titulo_cliente,
-                self.descricao_cliente,
-                self.cor_cliente,
-                self.image_cliente,
-                self.staff_id,
+                self.staff_id  # 👈 salva staff
             )
 
             await interaction.response.send_message(
@@ -124,19 +104,16 @@ class TicketBuilderView(discord.ui.View):
                 f"❌ Erro ao salvar: {e}",
                 ephemeral=True
             )
-        custom_id="ticket_edit_title"
 
-#---------sistema de tickets ----------#
 class TicketOpenView(discord.ui.View):
     def __init__(self, ticket_id: int):
         super().__init__(timeout=None)
         self.ticket_id = ticket_id
 
     @discord.ui.button(
-        label="Abrir Ticket",
-        style=discord.ButtonStyle.primary,
-        emoji="🎫",
-        custom_id="ticket_open"
+        label="🎫 Abrir Ticket",
+        style=discord.ButtonStyle.green,
+        custom_id="ticket_open_private"
     )
     async def abrir_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
 
@@ -197,9 +174,9 @@ class TicketOpenView(discord.ui.View):
 
             # 📩 embed do ticket
             embed = discord.Embed(
-                title=data["titulo_cliente"],
-                description=data["descricao_cliente"],
-                color=discord.Color(data["cor_cliente"])
+                title=data["title"],
+                description=data["description"],
+                color=discord.Color(data["color"])
             )
 
             if data["image"]:

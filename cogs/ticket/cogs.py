@@ -105,7 +105,7 @@ class Tickets(commands.Cog):
             )
 
         except Exception as e:
-            await interaction.followup.send(embed=embeds.erro(f"❌ Erro: {e}"))
+            await interaction.followup.send(f"❌ Erro: {e}")
     # -------------------- ENVIAR -------------------- #
     @tickets.command(name="enviar", description="envia o ticket para um canal")
     @app_commands.checks.has_permissions(administrator=True)
@@ -139,16 +139,7 @@ class Tickets(commands.Cog):
             if data["image"]:
                 embed.set_image(url=data["image"])
 
-            msg = await canal.send(
-                embed=embed,
-                view=TicketOpenView(id)
-            )
-
-            await services.salvar_painel(
-                id,
-                msg.id,
-                canal.id
-            )
+            await canal.send(embed=embed, view=TicketOpenView(id))
 
             await interaction.followup.send(
                 embed=embeds.acerto(
@@ -157,7 +148,7 @@ class Tickets(commands.Cog):
             )
 
         except Exception as e:
-            await interaction.followup.send(embed=embeds.erro(f"❌ Erro: {e}"))
+            await interaction.followup.send(f"❌ Erro: {e}")
 
 
 # -------------------- SETUP -------------------- #

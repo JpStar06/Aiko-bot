@@ -48,7 +48,7 @@ async def buscar_ticket(guild_id: int, ticket_id: int):
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
             """
-            SELECT titulo, descricao, cor, imagem, titulo_cliente, descricao_cliente, cor_cliente, imagem_cliente, staff_id
+            SELECT titulo, descricao, cor, imagem, staff_id
             FROM tickets
             WHERE id=$1 AND guild_id=$2
             """,
@@ -63,10 +63,6 @@ async def buscar_ticket(guild_id: int, ticket_id: int):
             "description": row["descricao"],
             "color": row["cor"],
             "image": row["imagem"],
-            "titulo_cliente": row["titulo_cliente"],
-            "descricao_cliente": row["descricao_cliente"],
-            "cor_cliente": row["cor_cliente"],
-            "image_cliente": row["imagem_cliente"],
             "staff_id": row["staff_id"]
         }
 
@@ -79,10 +75,6 @@ async def editar_ticket(
     nova_descricao=None,
     nova_cor=None,
     imagem_url=None,
-    novo_titulo_cliente=None,
-    nova_descricao_cliente=None,
-    nova_cor_cliente=None,
-    nova_imagem_cliente=None,
     staff_id=None
 ):
     pool = get_connection()
@@ -90,7 +82,7 @@ async def editar_ticket(
     async with pool.acquire() as conn:
         data = await conn.fetchrow(
             """
-            SELECT titulo, descricao, cor, imagem, staff_id, titulo_cliente, descricao_cliente, cor_cliente, imagem_cliente
+            SELECT titulo, descricao, cor, imagem, staff_id
             FROM tickets
             WHERE id=$1 AND guild_id=$2
             """,
@@ -105,18 +97,14 @@ async def editar_ticket(
         cor = nova_cor if nova_cor is not None else data["cor"]
         imagem = imagem_url if imagem_url is not None else data["imagem"]
         staff = staff_id if staff_id is not None else data["staff_id"]
-        titulo_cliente = novo_titulo_cliente or data["titulo_cliente"]
-        descricao_cliente = nova_descricao_cliente or data["descricao_cliente"]
-        cor_cliente = nova_cor_cliente if nova_cor_cliente is not None else data["cor_cliente"]
-        imagem_cliente = nova_imagem_cliente if nova_imagem_cliente is not None else data["imagem_cliente"]
 
         await conn.execute(
             """
             UPDATE tickets
-            SET titulo=$1, descricao=$2, cor=$3, imagem=$4, staff_id=$5, titulo_cliente=$6, descricao_cliente=$7, cor_cliente=$8, imagem_cliente=$9
-            WHERE id=$10 AND guild_id=$11
+            SET titulo=$1, descricao=$2, cor=$3, imagem=$4, staff_id=$5
+            WHERE id=$6 AND guild_id=$7
             """,
-            titulo, descricao, cor, imagem, staff, titulo_cliente, descricao_cliente, cor_cliente, imagem_cliente, ticket_id, guild_id
+            titulo, descricao, cor, imagem, staff, ticket_id, guild_id
         )
 
         return {
@@ -124,46 +112,5 @@ async def editar_ticket(
             "description": descricao,
             "color": cor,
             "image": imagem,
-            "staff_id": staff,
-            "titulo_cliente": titulo_cliente,
-            "descricao_cliente": descricao_cliente,
-            "cor_cliente": cor_cliente,
-            "image_cliente": imagem_cliente
+            "staff_id": staff
         }
-    
-# -------------------- SALVAR PAINEL -------------------- #
-async def salvar_painel(ticket_id, message_id, channel_id):
-
-    pool = get_connection()
-
-    async with pool.acquire() as conn:
-
-        await conn.execute(
-            """
-            UPDATE tickets
-            SET message_id=$1,
-                panel_channel_id=$2
-            WHERE id=$3
-            """,
-            message_id,
-            channel_id,
-            ticket_id
-        )
-
-
-# -------------------- BUSCAR PAINÉIS -------------------- #
-async def buscar_paineis():
-
-    pool = get_connection()
-
-    async with pool.acquire() as conn:
-
-        data = await conn.fetch(
-            """
-            SELECT id
-            FROM tickets
-            WHERE message_id IS NOT NULL
-            """
-        )
-
-        return data
