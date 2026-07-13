@@ -25,6 +25,11 @@ class TicketBuilderView(discord.ui.View):
         self.description = "Descrição"
         self.color = discord.Color.blue()
         self.image = None
+        self.titulo_cliente = "ESPERE SER ATENDIDO"
+        self.descricao_cliente = "Nossa equipe pode estar ocupada."
+        self.cor_cliente = discord.Color.red()
+        self.image_cliente = None
+        
 
         self.staff_role = None
         self.staff_id = None
