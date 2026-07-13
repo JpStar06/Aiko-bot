@@ -29,7 +29,7 @@ class TicketBuilderView(discord.ui.View):
         self.descricao_cliente = "Nossa equipe pode estar ocupada."
         self.cor_cliente = discord.Color.red()
         self.image_cliente = None
-        
+
 
         self.staff_role = None
         self.staff_id = None
@@ -99,7 +99,7 @@ class TicketBuilderView(discord.ui.View):
     async def salvar(self, interaction: discord.Interaction, button: discord.ui.Button):
         
         try:
-            await services.buscar_ticket(
+            await services.editar_ticket(
                 interaction.guild.id,
                 self.ticket_id,
                 self.title,
