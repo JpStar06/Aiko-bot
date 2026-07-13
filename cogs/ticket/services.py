@@ -1,6 +1,7 @@
 import asyncpg
 from database import get_connection
 
+
 # ---------- CREATE ----------
 async def criarticket(guild_id: int, channel_id: int):
     pool = get_connection()
