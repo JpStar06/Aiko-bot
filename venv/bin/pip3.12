@@ -1,6 +1,4 @@
-#!/bin/sh
-'''exec' "/home/jpstar06/Documentos/discord bot/Aiko-bot/venv/bin/python3" "$0" "$@"
-' '''
+#!/home/aiko/Documentos/Aiko-bot/venv/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys

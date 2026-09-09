@@ -28,7 +28,6 @@ async def criarticket(guild_id: int, channel_id: int):
         )
     return row["id"]
 
-
 # ---------- LIST ----------
 async def listarticket(guild_id: int):
     pool = get_connection()

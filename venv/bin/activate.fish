@@ -33,7 +33,7 @@ end
 # Unset irrelevant variables.
 deactivate nondestructive
 
-set -gx VIRTUAL_ENV '/home/jpstar06/Documentos/discord bot/Aiko-bot/venv'
+set -gx VIRTUAL_ENV /home/aiko/Documentos/Aiko-bot/venv
 
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV/"bin $PATH

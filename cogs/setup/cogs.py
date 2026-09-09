@@ -45,7 +45,7 @@ class SetupCog(commands.Cog):
         await channel.send(embed=embeds.tutorial_embed())
         await channel.send(embed=embeds.tutorial_embed2())
         await channel.send(embed=embeds.tutorial_embed3())
-        #await channel.send(embed=embeds.setupfinal())
+        await channel.send(embed=embeds.setupfinal())
 
         await interaction.followup.send(
             f"✅ Setup concluído em {channel.mention}",
