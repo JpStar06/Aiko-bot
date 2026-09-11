@@ -19,30 +19,20 @@ class Casino(commands.Cog):
     @casino.command(name="coinflip", description="Cara ou coroa")
     @app_commands.checks.cooldown(1, 2)
     async def coinflip(self, interaction: discord.Interaction, aposta: int, escolha: str):
-        escolha = escolha.lower()
-        
-        if escolha not in ["cara", "coroa"]:
-            await interaction.response.send_message(embed=embeds.erro("Escolha `cara` ou `coroa`"), ephemeral=True)
-            return
-
         coins = await self.get_coins(interaction.user.id)
+        game = services.CoinFlipGame()
+        sucesso, resultado = game.play(escolha, aposta, coins)
 
-        if aposta > coins:
-            await interaction.response.send_message(embed=embeds.erro("Você não tem coins suficientes."), ephemeral=True)
-            return
-        
-        if aposta <= 0:
-            await interaction.response.send_message(embed=embeds.erro("Você não pode usar valor igual ou menor que 0."), ephemeral=True)
+        if not sucesso:
+            await interaction.response.send_message(embed=embeds(f"ops, algo deu errado\n{resultado}"))
             return
 
-        resultado = random.choice(["cara", "coroa"])
-
-        if escolha == resultado:
+        if resultado["venceu"]:
             await self.add_coins(interaction.user.id, aposta)
-            embedresult = embeds.ganhou("🎉 Você ganhou!\n Caiu **{}** e você escolheu **{}**. Você ganhou `{}` coins!".format(resultado.capitalize(), escolha.capitalize(), aposta))
+            embedresult = embeds.ganhou(resultado)
         else:
             await self.add_coins(interaction.user.id, -aposta)
-            embedresult = embeds.perdeu("🎉 Você perdeu!\n Caiu **{}** e você escolheu **{}**. Você perdeu `{}` coins!".format(resultado.capitalize(), escolha.capitalize(), aposta))
+            embedresult = embeds.perdeu(resultado)
 
         await interaction.response.send_message(embed=embedresult)
 
@@ -113,7 +103,7 @@ class Casino(commands.Cog):
             await interaction.response.send_message(embed=embeds.erro("Você não pode usar valor igual ou menor que 0."), ephemeral=True)
             return
         
-        (r1, r2, r3), ganho, tipo = services.spin_slots(aposta)
+        (r1, r2, r3), ganho, tipo = services.SlotGame.spin_slots(aposta)
         resultado = f"{r1} | {r2} | {r3}\n"
 
         if tipo == "jackpot":
@@ -154,7 +144,7 @@ class Casino(commands.Cog):
             if aposta > coins:
                 return await interaction.followup.send("Você não tem coins suficientes.")
 
-            player, dealer = services.start_game()
+            player, dealer = services.CardGame.start_game()
 
             view = views.BlackjackView(player, dealer, interaction.user.id, aposta)
 
