@@ -32,7 +32,7 @@ class Casino(commands.Cog):
             embedresult = embeds.ganhou(f"você perdeu{resultado[1]}")
         else:
             await self.add_coins(interaction.user.id, -aposta)
-            embedresult = embeds.perdeu(resultado)
+            embedresult = embeds.perdeu(f"você perdeu{resultado[1]}")
 
         await interaction.response.send_message(embed=embedresult)
 
