@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from database import init_db
 from cogs.ticket.view import TicketOpenView, CloseTicketView
 from cogs.ticket import services
-from Services.monitor import heartbeat
+from aikobot_integration import heartbeat 
 
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
@@ -59,9 +59,7 @@ class Bot(commands.Bot):
 
         print("🎫 Views persistentes carregadas!")
         
-        self.monitor_task = asyncio.create_task(
-        heartbeat()
-        )
+    
 
 
 bot = Bot(command_prefix="!", intents=intents)
@@ -71,6 +69,7 @@ bot = Bot(command_prefix="!", intents=intents)
 async def on_ready():
     print(f"🤖 Logado como {bot.user} (ID: {bot.user.id})")
     print("------")
+    asyncio.create_task(heartbeat())
 
 
 async def main():
