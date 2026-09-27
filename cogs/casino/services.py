@@ -1,74 +1,110 @@
-from database import get_connection
-from . import embeds
+"""
+Regras dos jogos do casino, sem nenhuma dependência de Discord.
+
+Antes ``CardGame`` e ``SlotGame`` tinham métodos sem ``self`` nem
+``@staticmethod`` — funcionavam por acidente quando chamados como
+``CardGame.draw_card()``, mas ``views.py`` tentava chamá-los como
+``services.draw_card()`` (função de módulo, que nunca existiu) e isso
+quebrava o Blackjack em toda jogada. Agora os métodos são
+``@staticmethod`` de verdade e ``views.py`` foi corrigido para chamar
+``CardGame.draw_card()`` / ``CardGame.calculate_hand()``.
+"""
+
 import random
-import discord
-from discord import app_commands
-from discord.ext import commands
+
 
 class CardGame:
-    def draw_card():
-        suits = ["♣️", "♠️", "♥️", "♦️"]
-        values = [
-            ("A", 11),
-            ("2", 2), ("3", 3), ("4", 4), ("5", 5),
-            ("6", 6), ("7", 7), ("8", 8), ("9", 9),
-            ("10", 10), ("J", 10), ("Q", 10), ("K", 10)
-        ]
+    """Regras de baralho usadas pelo Blackjack."""
 
-        value, points = random.choice(values)
-        suit = random.choice(suits)
+    _NAIPES = ["♣️", "♠️", "♥️", "♦️"]
+    _VALORES = [
+        ("A", 11),
+        ("2", 2), ("3", 3), ("4", 4), ("5", 5),
+        ("6", 6), ("7", 7), ("8", 8), ("9", 9),
+        ("10", 10), ("J", 10), ("Q", 10), ("K", 10),
+    ]
 
-        return {"display": f"{value}{suit}", "value": points}
+    @staticmethod
+    def draw_card() -> dict:
+        """Compra uma carta aleatória: ``{"display": "A♠️", "value": 11}``."""
+        valor, pontos = random.choice(CardGame._VALORES)
+        naipe = random.choice(CardGame._NAIPES)
 
-    def calculate_hand(hand):
+        return {"display": f"{valor}{naipe}", "value": pontos}
+
+    @staticmethod
+    def calculate_hand(hand: list[dict]) -> int:
+        """Soma a mão tratando o Ás (11 -> 1) para evitar estourar 21."""
         total = sum(card["value"] for card in hand)
+        ases = sum(1 for card in hand if card["value"] == 11)
 
-        # tratar Ás
-        aces = sum(1 for card in hand if card["value"] == 11)
-
-        while total > 21 and aces:
+        while total > 21 and ases:
             total -= 10
-            aces -= 1
+            ases -= 1
 
         return total
 
-    def start_game():
+    @staticmethod
+    def start_game() -> tuple[list[dict], list[dict]]:
+        """Compra as duas cartas iniciais do jogador e do dealer."""
         player = [CardGame.draw_card(), CardGame.draw_card()]
         dealer = [CardGame.draw_card(), CardGame.draw_card()]
 
         return player, dealer
 
+
 class SlotGame:
-    def spin_slots(aposta: int):
-            EMOJIS = ["🍒", "🍋", "🍉", "⭐", "💎", "💶", "🪙"]
-            r1 = random.choice(EMOJIS)
-            r2 = random.choice(EMOJIS)
-            r3 = random.choice(EMOJIS)
-    
-            if r1 == r2 == r3:
-                return (r1, r2, r3), aposta * 6, "jackpot"
-            elif r1 == r2 or r2 == r3 or r1 == r3:
-                return (r1, r2, r3), aposta * 3, "win"
-            else:
-                return (r1, r2, r3), -aposta, "lose"
+    """Regras do caça-níquel."""
+
+    _EMOJIS = ["🍒", "🍋", "🍉", "⭐", "💎", "💶", "🪙"]
+
+    @staticmethod
+    def spin_slots(aposta: int) -> tuple[tuple[str, str, str], int, str]:
+        """Gira os 3 rolos e devolve ``(rolos, variação_de_coins, tipo)``.
+
+        ``variação_de_coins`` já vem com o sinal certo: positiva em caso de
+        vitória/jackpot, negativa (``-aposta``) em caso de derrota — basta
+        somar direto ao saldo do jogador, sem descontar a aposta à parte.
+        """
+        r1, r2, r3 = (random.choice(SlotGame._EMOJIS) for _ in range(3))
+
+        if r1 == r2 == r3:
+            return (r1, r2, r3), aposta * 6, "jackpot"
+        elif r1 == r2 or r2 == r3 or r1 == r3:
+            return (r1, r2, r3), aposta * 3, "win"
+        else:
+            return (r1, r2, r3), -aposta, "lose"
+
 
 class CoinFlipGame:
-    def __init__(self):
-        self.options = ["cara", "coroa"]
+    """Regras do cara ou coroa."""
 
-    def play(self, escolha: str, aposta: int, coins: int):
+    OPCOES = ("cara", "coroa")
 
+    def play(self, escolha: str, aposta: int, coins: int) -> tuple[bool, dict | str]:
+        """Valida e resolve a jogada.
+
+        Retorna ``(True, dados)`` em caso de sucesso — onde ``dados`` tem
+        ``escolha``, ``aposta``, ``resultado`` e ``venceu`` — ou
+        ``(False, motivo)`` quando a jogada é inválida.
+        """
         escolha = escolha.lower()
 
-        if escolha not in self.options:
-            return False, "escolha invalida"
+        if escolha not in self.OPCOES:
+            return False, "escolha inválida (use `cara` ou `coroa`)"
 
         if aposta <= 0:
             return False, "A aposta deve ser maior que 0"
 
         if aposta > coins:
-            return False, "Você não tem dinheiro suficiente"
+            return False, "Você não tem coins suficientes"
 
-        resultado = random.choice(self.options)
-        if 
-        return True, {"escolha": escolha, "aposta": aposta, "resultado": resultado, "venceu": venceu}
+        resultado = random.choice(self.OPCOES)
+        venceu = escolha == resultado
+
+        return True, {
+            "escolha": escolha,
+            "aposta": aposta,
+            "resultado": resultado,
+            "venceu": venceu,
+        }

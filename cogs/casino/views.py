@@ -1,9 +1,21 @@
 import discord
-from . import services
+
+from .services import CardGame
 from cogs.comercio import services as eco
 
+
 class BlackjackView(discord.ui.View):
-    def __init__(self, player, dealer, user_id, aposta):
+    """Mesa de Blackjack contra o dealer.
+
+    Correções em relação à versão anterior: as jogadas chamavam
+    ``services.draw_card()`` / ``services.calculate_hand()``, que nunca
+    existiram como funções de módulo (só como métodos de ``CardGame``) —
+    todo "Hit" ou "Stand" quebrava com ``AttributeError``. Também havia um
+    ``self.user.id`` (deveria ser ``self.user_id``) que quebraria o "Hit"
+    mesmo depois de corrigir o resto.
+    """
+
+    def __init__(self, player: list[dict], dealer: list[dict], user_id: int, aposta: int):
         super().__init__(timeout=60)
         self.player = player
         self.dealer = dealer
@@ -11,8 +23,9 @@ class BlackjackView(discord.ui.View):
         self.aposta = aposta
         self.get_coins = eco.get_coins
         self.add_coins = eco.add_coins
+        self.message: discord.Message | None = None
 
-    def build_embed(self, hidden=True):
+    def build_embed(self, hidden: bool = True) -> discord.Embed:
         dealer_hand = (
             "?, " + ", ".join(card["display"] for card in self.dealer[1:])
             if hidden
@@ -25,23 +38,35 @@ class BlackjackView(discord.ui.View):
                 f"💰 Aposta: **{self.aposta}**\n\n"
                 f"**Sua mão:**\n"
                 f"{', '.join(card['display'] for card in self.player)} "
-                f"({services.calculate_hand(self.player)})\n\n"
+                f"({CardGame.calculate_hand(self.player)})\n\n"
                 f"**Dealer:**\n"
                 f"{dealer_hand}"
             ),
             color=discord.Color.green()
         )
 
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.user_id:
+            await interaction.response.send_message("Não é seu jogo.", ephemeral=True)
+            return False
+        return True
+
+    async def on_timeout(self):
+        for item in self.children:
+            item.disabled = True
+
+        if self.message:
+            try:
+                await self.message.edit(view=self)
+            except discord.HTTPException:
+                pass
+
     @discord.ui.button(label="Hit", style=discord.ButtonStyle.green)
     async def hit(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.player.append(CardGame.draw_card())
 
-        if interaction.user.id != self.user_id:
-            return await interaction.response.send_message("Não é seu jogo.", ephemeral=True)
-
-        self.player.append(services.draw_card())
-
-        if services.calculate_hand(self.player) > 21:
-            await self.add_coins(self.user.id, -self.aposta)
+        if CardGame.calculate_hand(self.player) > 21:
+            await self.add_coins(self.user_id, -self.aposta)
             embed = self.build_embed(hidden=False)
             embed.description += "\n💀 Você estourou!"
             self.stop()
@@ -51,16 +76,12 @@ class BlackjackView(discord.ui.View):
 
     @discord.ui.button(label="Stand", style=discord.ButtonStyle.red)
     async def stand(self, interaction: discord.Interaction, button: discord.ui.Button):
-
-        if interaction.user.id != self.user_id:
-            return await interaction.response.send_message("Não é seu jogo.", ephemeral=True)
-
         # dealer joga
-        while services.calculate_hand(self.dealer) < 17:
-            self.dealer.append(services.draw_card())
+        while CardGame.calculate_hand(self.dealer) < 17:
+            self.dealer.append(CardGame.draw_card())
 
-        player_total = services.calculate_hand(self.player)
-        dealer_total = services.calculate_hand(self.dealer)
+        player_total = CardGame.calculate_hand(self.player)
+        dealer_total = CardGame.calculate_hand(self.dealer)
 
         embed = self.build_embed(hidden=False)
 

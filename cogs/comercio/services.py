@@ -1,9 +1,24 @@
-from database import get_connection
+"""
+Camada de acesso a dados do sistema de economia (comércio).
+
+Principais correções em relação à versão anterior: ``transfer`` e
+``open_box`` faziam duas escritas separadas (duas chamadas de
+``conn.execute``/dois ``pool.acquire()``) sem transação — se o bot
+caísse entre as duas, dinheiro podia sumir ou ser duplicado. Agora cada
+uma roda dentro de ``conn.transaction()``.
+"""
+
 import datetime
 import random
 
-# -------------------- USER --------------------
-async def get_user(user_id: int):
+from database import get_connection
+
+PRECO_BOX = 500
+VALOR_MINIMO_TRANSFERENCIA = 100  # quantia deve ser > 99
+
+
+# -------------------- USER -------------------- #
+async def get_user(user_id: int) -> dict:
     pool = get_connection()
 
     async with pool.acquire() as conn:
@@ -14,19 +29,16 @@ async def get_user(user_id: int):
 
         if not user:
             await conn.execute(
-                "INSERT INTO economy (user_id, coins, daily_streak, boxes) VALUES ($1, 0, 0, 0)",
+                "INSERT INTO economy (user_id, coins, daily_streak, boxes) VALUES ($1, 0, 0, 0) "
+                "ON CONFLICT (user_id) DO NOTHING",
                 user_id
             )
-            return {
-                "coins": 0,
-                "daily_streak": 0,
-                "last_daily": None,
-                "boxes": 0
-            }
+            return {"coins": 0, "daily_streak": 0, "last_daily": None, "boxes": 0}
 
         return dict(user)
-        
-# -------------------- COINS --------------------
+
+
+# -------------------- COINS -------------------- #
 async def add_coins(user_id: int, amount: int):
     pool = get_connection()
 
@@ -36,154 +48,157 @@ async def add_coins(user_id: int, amount: int):
             amount, user_id
         )
 
+
 async def get_coins(user_id: int) -> int:
     pool = get_connection()
 
     async with pool.acquire() as conn:
-        row = await conn.fetchrow(
-            "SELECT coins FROM economy WHERE user_id=$1", user_id
-        )
+        row = await conn.fetchrow("SELECT coins FROM economy WHERE user_id=$1", user_id)
 
         if not row:
             await conn.execute(
-                "INSERT INTO economy (user_id, coins) VALUES ($1, $2)",
+                "INSERT INTO economy (user_id, coins) VALUES ($1, $2) ON CONFLICT (user_id) DO NOTHING",
                 user_id, 0
             )
             return 0
 
         return row["coins"]
-# -------------------- DAILY --------------------
-async def daily(user_id: int):
+
+
+# -------------------- DAILY -------------------- #
+async def daily(user_id: int) -> dict:
     pool = get_connection()
     user = await get_user(user_id)
 
-    now = int(datetime.datetime.utcnow().strftime("%Y%m%d"))
+    hoje = int(datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d"))
 
-    if user["last_daily"] == now:
+    if user["last_daily"] == hoje:
         return {"already_claimed": True}
 
-    streak = user["daily_streak"] or 0
-    streak += 1
+    streak = (user["daily_streak"] or 0) + 1
     reward = random.randint(100, 500) + (streak * 20)
 
     async with pool.acquire() as conn:
         await conn.execute(
             "UPDATE economy SET coins=coins+$1, daily_streak=$2, last_daily=$3 WHERE user_id=$4",
-            reward, streak, now, user_id
+            reward, streak, hoje, user_id
         )
 
-    return {
-        "reward": reward,
-        "streak": streak,
-        "already_claimed": False
-    }
+    return {"reward": reward, "streak": streak, "already_claimed": False}
 
-# -------------------- WORK --------------------
-async def work(user_id: int):
+
+# -------------------- WORK -------------------- #
+async def work(user_id: int) -> dict:
     jobs = ["programador", "minerador", "chef", "hacker", "músico"]
     job = random.choice(jobs)
     reward = random.randint(100, 400)
 
     await add_coins(user_id, reward)
 
-    return {
-        "job": job,
-        "reward": reward
-    }
+    return {"job": job, "reward": reward}
 
-# -------------------- LOOTBOX --------------------
 
-async def open_box(user_id: int):
+# -------------------- LOOTBOX -------------------- #
+async def open_box(user_id: int) -> dict | None:
     pool = get_connection()
-    user = await get_user(user_id)
-
-    if user["boxes"] <= 0:
-        return None
 
     async with pool.acquire() as conn:
-        await conn.execute(
-            "UPDATE economy SET boxes = boxes - 1 WHERE user_id=$1",
-            user_id
-        )
+        async with conn.transaction():
+            user = await conn.fetchrow(
+                "SELECT coins, boxes FROM economy WHERE user_id=$1 FOR UPDATE",
+                user_id
+            )
 
-    rewards = [
-        (random.randint(400, 500), "🪙 comum"),
-        (random.randint(500, 700), "✨ raro"),
-        (random.randint(700, 900), "💎 épico"),
-        (random.randint(1000, 3000), "👑 lendário"),
-        (user["coins"] * 2, "🌟 mítico")
-    ]
+            if not user or user["boxes"] <= 0:
+                return None
 
-    reward, rarity = random.choices(rewards, weights=[60, 25, 10, 5, 1])[0]
+            await conn.execute(
+                "UPDATE economy SET boxes = boxes - 1 WHERE user_id=$1",
+                user_id
+            )
 
-    await add_coins(user_id, reward)
+            rewards = [
+                (random.randint(400, 500), "🪙 comum"),
+                (random.randint(500, 700), "✨ raro"),
+                (random.randint(700, 900), "💎 épico"),
+                (random.randint(1000, 3000), "👑 lendário"),
+                (user["coins"] * 2, "🌟 mítico"),
+            ]
 
-    return {
-        "reward": reward,
-        "rarity": rarity
-    }
+            reward, rarity = random.choices(rewards, weights=[60, 25, 10, 5, 1])[0]
 
-async def buy_box(user_id: int):
+            await conn.execute(
+                "UPDATE economy SET coins = coins + $1 WHERE user_id=$2",
+                reward, user_id
+            )
+
+    return {"reward": reward, "rarity": rarity}
+
+
+async def buy_box(user_id: int) -> dict:
     pool = get_connection()
-    user = await get_user(user_id)
-
-    price = 500
-
-    if user["coins"] < price:
-        return {
-            "success": False,
-            "faltante": price - user["coins"]
-        }
 
     async with pool.acquire() as conn:
-        await conn.execute(
-            "UPDATE economy SET coins = coins - $1, boxes = boxes + 1 WHERE user_id=$2",
-            price, user_id
-        )
+        async with conn.transaction():
+            user = await conn.fetchrow(
+                "SELECT coins FROM economy WHERE user_id=$1 FOR UPDATE",
+                user_id
+            )
+            coins = user["coins"] if user else 0
 
-    return {
-        "success": True
-    }
+            if coins < PRECO_BOX:
+                return {"success": False, "faltante": PRECO_BOX - coins}
 
-# -------------------- PAY --------------------
-async def transfer(sender_id: int, target_id: int, amount: int):
-    pool = get_connection()
+            await conn.execute(
+                "UPDATE economy SET coins = coins - $1, boxes = boxes + 1 WHERE user_id=$2",
+                PRECO_BOX, user_id
+            )
 
-    sender = await get_user(sender_id)
+    return {"success": True}
+
+
+# -------------------- PAY -------------------- #
+async def transfer(sender_id: int, target_id: int, amount: int) -> dict:
+    if sender_id == target_id:
+        return {"error": "self_transfer"}
 
     if amount <= 99:
         return {"error": "invalid_amount"}
 
-    if amount > sender["coins"]:
-        return {"error": "no_money"}
-
-    taxa = int(amount * 0.02)
-    recebido = amount - taxa
+    pool = get_connection()
 
     async with pool.acquire() as conn:
-        await conn.execute(
-            "UPDATE economy SET coins = coins - $1 WHERE user_id=$2",
-            amount, sender_id
-        )
+        async with conn.transaction():
+            sender = await conn.fetchrow(
+                "SELECT coins FROM economy WHERE user_id=$1 FOR UPDATE",
+                sender_id
+            )
 
-        await conn.execute(
-            "INSERT INTO economy (user_id, coins) VALUES ($1, 0) ON CONFLICT (user_id) DO NOTHING",
-            target_id
-        )
+            if not sender or amount > sender["coins"]:
+                return {"error": "no_money"}
 
-        await conn.execute(
-            "UPDATE economy SET coins = coins + $1 WHERE user_id=$2",
-            recebido, target_id
-        )
+            taxa = int(amount * 0.02)
+            recebido = amount - taxa
 
-    return {
-        "enviado": amount,
-        "recebido": recebido,
-        "taxa": taxa,
-        "target_id": target_id
-    }
+            await conn.execute(
+                "UPDATE economy SET coins = coins - $1 WHERE user_id=$2",
+                amount, sender_id
+            )
 
-async def get_ranking(limit: int = 10):
+            await conn.execute(
+                "INSERT INTO economy (user_id, coins) VALUES ($1, 0) ON CONFLICT (user_id) DO NOTHING",
+                target_id
+            )
+
+            await conn.execute(
+                "UPDATE economy SET coins = coins + $1 WHERE user_id=$2",
+                recebido, target_id
+            )
+
+    return {"enviado": amount, "recebido": recebido, "taxa": taxa, "target_id": target_id}
+
+
+async def get_ranking(limit: int = 10) -> list[dict]:
     pool = get_connection()
 
     async with pool.acquire() as conn:
