@@ -56,6 +56,16 @@ async def init_db():
         )
         """)
 
+        await conn.execute("""
+        CREATE TABLE IF NOT EXISTS ticket_channels (
+            channel_id BIGINT PRIMARY KEY,
+            ticket_id INTEGER,
+            guild_id BIGINT,
+            user_id BIGINT,
+            staff_id BIGINT
+        )
+        """)
+
         # economy
         await conn.execute("""
         CREATE TABLE IF NOT EXISTS economy (

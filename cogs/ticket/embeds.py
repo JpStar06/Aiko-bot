@@ -1,5 +1,6 @@
 import discord
 
+
 def padrao():
     return discord.Embed(
         title="Título do Embed",
@@ -7,23 +8,26 @@ def padrao():
         color=discord.Color.blue()
     )
 
+
 def erro(msg: str):
     return discord.Embed(
-        title="Erro",
+        title="❌ Erro",
         description=msg,
         color=discord.Color.red()
     )
 
+
 def acerto(msg: str):
     return discord.Embed(
-        title="concluido",
+        title="✅ Concluído",
         description=msg,
         color=discord.Color.green()
     )
 
+
 def lista(msg: str):
     return discord.Embed(
-        title="Embeds criados",
+        title="🎫 Tickets criados",
         description=msg,
         color=discord.Color.purple()
     )

@@ -21,7 +21,6 @@ class Tickets(commands.Cog):
     @tickets.command(name="criar", description="cria um ticket padrão")
     @app_commands.checks.has_permissions(administrator=True)
     async def criarticket(self, interaction: discord.Interaction):
-
         await interaction.response.defer(ephemeral=True)
 
         try:
@@ -42,25 +41,18 @@ class Tickets(commands.Cog):
     @tickets.command(name="listar", description="lista todos os tickets do server")
     @app_commands.checks.has_permissions(administrator=True)
     async def listartickets(self, interaction: discord.Interaction):
-
         await interaction.response.defer(ephemeral=True)
 
         try:
             ticketlist = await services.listarticket(interaction.guild.id)
 
             if not ticketlist:
-                await interaction.followup.send(
-                    embed=embeds.erro("Nenhum ticket criado.")
-                )
+                await interaction.followup.send(embed=embeds.erro("Nenhum ticket criado."))
                 return
 
-            lista = "\n".join(
-                [f"ID `{e['id']}` - {e['titulo']}" for e in ticketlist]
-            )
+            lista = "\n".join(f"ID `{e['id']}` - {e['titulo']}" for e in ticketlist)
 
-            await interaction.followup.send(
-                embed=embeds.lista(lista)
-            )
+            await interaction.followup.send(embed=embeds.lista(lista))
 
         except Exception as e:
             await interaction.followup.send(f"❌ Erro: {e}")
@@ -69,14 +61,10 @@ class Tickets(commands.Cog):
     @tickets.command(name="editar", description="editar um ticket")
     @app_commands.checks.has_permissions(administrator=True)
     async def builder(self, interaction: discord.Interaction, id: int):
-
         await interaction.response.defer()  # 👈 ESSENCIAL
 
         try:
-            data = await services.buscar_ticket(
-                interaction.guild.id,
-                id
-            )
+            data = await services.buscar_ticket(interaction.guild.id, id)
 
             if not data:
                 return await interaction.followup.send(
@@ -86,11 +74,20 @@ class Tickets(commands.Cog):
 
             view = TicketBuilderView(interaction.user, id)
 
-            # carregar dados
+            # embed do painel
             view.title = data["title"]
             view.description = data["description"]
             view.color = discord.Color(data["color"])
             view.image = data["image"]
+
+            # embed do cliente
+            if data["title_cliente"] is not None:
+                view.title_cliente = data["title_cliente"]
+            if data["description_cliente"] is not None:
+                view.description_cliente = data["description_cliente"]
+            if data["color_cliente"] is not None:
+                view.color_cliente = discord.Color(data["color_cliente"])
+            view.image_cliente = data["image_cliente"]
 
             # 👮 carregar staff
             view.staff_id = data["staff_id"]
@@ -100,12 +97,13 @@ class Tickets(commands.Cog):
                     view.staff_role = role
 
             await interaction.followup.send(
-                embed=view.build_embed(),
+                embeds=view.build_embeds(),
                 view=view
             )
 
         except Exception as e:
             await interaction.followup.send(f"❌ Erro: {e}")
+
     # -------------------- ENVIAR -------------------- #
     @tickets.command(name="enviar", description="envia o ticket para um canal")
     @app_commands.checks.has_permissions(administrator=True)
@@ -115,19 +113,13 @@ class Tickets(commands.Cog):
         id: int,
         canal: discord.TextChannel
     ):
-
         await interaction.response.defer(ephemeral=True)
 
         try:
-            data = await services.buscar_ticket(
-                interaction.guild.id,
-                id
-            )
+            data = await services.buscar_ticket(interaction.guild.id, id)
 
             if not data:
-                await interaction.followup.send(
-                    embed=embeds.erro("Ticket não encontrado.")
-                )
+                await interaction.followup.send(embed=embeds.erro("Ticket não encontrado."))
                 return
 
             embed = discord.Embed(
@@ -139,12 +131,13 @@ class Tickets(commands.Cog):
             if data["image"]:
                 embed.set_image(url=data["image"])
 
-            await canal.send(embed=embed, view=TicketOpenView(id))
+            mensagem = await canal.send(embed=embed, view=TicketOpenView(id))
+
+            # 👇 sem isso o painel nunca sobrevive a um restart do bot
+            await services.salvar_painel(id, mensagem.id, canal.id)
 
             await interaction.followup.send(
-                embed=embeds.acerto(
-                    f"✅ Ticket `{id}` enviado para {canal.mention}!"
-                )
+                embed=embeds.acerto(f"✅ Ticket `{id}` enviado para {canal.mention}!")
             )
 
         except Exception as e:

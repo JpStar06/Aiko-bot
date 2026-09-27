@@ -70,6 +70,5 @@ class CoinFlipGame:
             return False, "Você não tem dinheiro suficiente"
 
         resultado = random.choice(self.options)
-        venceu = escolha == resultado
-
+        if 
         return True, {"escolha": escolha, "aposta": aposta, "resultado": resultado, "venceu": venceu}
