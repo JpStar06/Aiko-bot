@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from database import init_db
 from cogs.ticket.view import TicketOpenView, CloseTicketView
 from cogs.ticket import services
+from Services.monitor import heartbeat
 
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
@@ -57,6 +58,10 @@ class Bot(commands.Bot):
         self.add_view(CloseTicketView())
 
         print("🎫 Views persistentes carregadas!")
+        
+        self.monitor_task = asyncio.create_task(
+        heartbeat()
+        )
 
 
 bot = Bot(command_prefix="!", intents=intents)
