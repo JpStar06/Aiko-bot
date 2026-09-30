@@ -2,7 +2,7 @@ import discord
 import random
 from discord import app_commands
 from discord.ext import commands
-from database import get_connection
+from databaseConfig import get_connection
 from . import services
 from . import embeds
 

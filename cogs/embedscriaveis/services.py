@@ -1,4 +1,4 @@
-from database import get_connection
+from databaseConfig import get_connection
 
 async def criarembed(guild_id: int):
     pool = get_connection()

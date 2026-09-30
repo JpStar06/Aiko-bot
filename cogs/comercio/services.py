@@ -1,74 +1,16 @@
-"""
-Camada de acesso a dados do sistema de economia (comércio).
-
-Principais correções em relação à versão anterior: ``transfer`` e
-``open_box`` faziam duas escritas separadas (duas chamadas de
-``conn.execute``/dois ``pool.acquire()``) sem transação — se o bot
-caísse entre as duas, dinheiro podia sumir ou ser duplicado. Agora cada
-uma roda dentro de ``conn.transaction()``.
-"""
-
 import datetime
 import random
 
-from database import get_connection
+from databaseConfig import get_connection
+from Services.database import Coins, Infos
 
 PRECO_BOX = 500
 VALOR_MINIMO_TRANSFERENCIA = 100  # quantia deve ser > 99
 
-
-# -------------------- USER -------------------- #
-async def get_user(user_id: int) -> dict:
-    pool = get_connection()
-
-    async with pool.acquire() as conn:
-        user = await conn.fetchrow(
-            "SELECT coins, daily_streak, last_daily, boxes FROM economy WHERE user_id=$1",
-            user_id
-        )
-
-        if not user:
-            await conn.execute(
-                "INSERT INTO economy (user_id, coins, daily_streak, boxes) VALUES ($1, 0, 0, 0) "
-                "ON CONFLICT (user_id) DO NOTHING",
-                user_id
-            )
-            return {"coins": 0, "daily_streak": 0, "last_daily": None, "boxes": 0}
-
-        return dict(user)
-
-
-# -------------------- COINS -------------------- #
-async def add_coins(user_id: int, amount: int):
-    pool = get_connection()
-
-    async with pool.acquire() as conn:
-        await conn.execute(
-            "UPDATE economy SET coins = coins + $1 WHERE user_id=$2",
-            amount, user_id
-        )
-
-
-async def get_coins(user_id: int) -> int:
-    pool = get_connection()
-
-    async with pool.acquire() as conn:
-        row = await conn.fetchrow("SELECT coins FROM economy WHERE user_id=$1", user_id)
-
-        if not row:
-            await conn.execute(
-                "INSERT INTO economy (user_id, coins) VALUES ($1, $2) ON CONFLICT (user_id) DO NOTHING",
-                user_id, 0
-            )
-            return 0
-
-        return row["coins"]
-
-
 # -------------------- DAILY -------------------- #
 async def daily(user_id: int) -> dict:
     pool = get_connection()
-    user = await get_user(user_id)
+    user = await Infos.get(user_id)
 
     hoje = int(datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d"))
 
@@ -93,7 +35,7 @@ async def work(user_id: int) -> dict:
     job = random.choice(jobs)
     reward = random.randint(100, 400)
 
-    await add_coins(user_id, reward)
+    await Coins.add(user_id, reward)
 
     return {"job": job, "reward": reward}
 

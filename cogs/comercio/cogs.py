@@ -1,9 +1,9 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-
 from . import services
 from . import embeds
+from Services.database import Coins, Infos
 
 
 class Economia(commands.Cog):
@@ -15,7 +15,7 @@ class Economia(commands.Cog):
 
     @economia.command(name="carteira", description="Mostra sua carteira")
     async def coins(self, interaction: discord.Interaction):
-        user = await services.get_user(interaction.user.id)
+        user = await Infos.get(interaction.user.id)
 
         await interaction.response.send_message(
             embed=embeds.carteira(

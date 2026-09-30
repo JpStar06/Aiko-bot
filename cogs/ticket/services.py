@@ -5,7 +5,7 @@ Mantém toda a interação com o banco isolada dos cogs/views, para que
 a lógica de Discord não precise conhecer SQL e vice-versa.
 """
 
-from database import get_connection
+from databaseConfig import get_connection
 
 
 # ---------- CREATE ----------

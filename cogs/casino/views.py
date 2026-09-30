@@ -2,6 +2,7 @@ import discord
 
 from .services import CardGame
 from cogs.comercio import services as eco
+from Services.database import Coins, Infos
 
 
 class BlackjackView(discord.ui.View):
@@ -21,8 +22,8 @@ class BlackjackView(discord.ui.View):
         self.dealer = dealer
         self.user_id = user_id
         self.aposta = aposta
-        self.get_coins = eco.get_coins
-        self.add_coins = eco.add_coins
+        self.get_coins = Coins.get
+        self.add_coins = Coins.add
         self.message: discord.Message | None = None
 
     def build_embed(self, hidden: bool = True) -> discord.Embed:

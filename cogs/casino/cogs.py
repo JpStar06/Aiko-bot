@@ -6,6 +6,7 @@ from discord.ext import commands
 
 from . import services, embeds, views
 from cogs.comercio import services as eco
+from Services.database import Coins, Infos
 
 
 async def _erro_cooldown(interaction: discord.Interaction, error: app_commands.AppCommandError):
@@ -24,9 +25,9 @@ async def _erro_cooldown(interaction: discord.Interaction, error: app_commands.A
 class Casino(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.get_coins = eco.get_coins
-        self.add_coins = eco.add_coins
-        self.get_user = eco.get_user
+        self.get_coins = Coins.get
+        self.add_coins = Coins.add
+        self.get_user = Infos.get
 
     casino = app_commands.Group(name="casino", description="Jogos de aposta")
 

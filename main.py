@@ -3,7 +3,7 @@ from discord.ext import commands
 import asyncio
 import os
 from dotenv import load_dotenv
-from database import init_db
+from databaseConfig import init_db
 from cogs.ticket.view import TicketOpenView, CloseTicketView
 from cogs.ticket import services
 from aikobot_integration import heartbeat 
