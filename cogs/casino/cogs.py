@@ -4,13 +4,13 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from . import services, embeds, views
+from . import Games, embeds, views
 from cogs.comercio import services as eco
 from Services.database import Coins, Infos
+from Services import casinoServices
 
 
 async def _erro_cooldown(interaction: discord.Interaction, error: app_commands.AppCommandError):
-    """Handler compartilhado para os comandos com cooldown do casino."""
     if not isinstance(error, app_commands.errors.CommandOnCooldown):
         raise error
 
@@ -35,26 +35,10 @@ class Casino(commands.Cog):
     @casino.command(name="coinflip", description="Cara ou coroa")
     @app_commands.checks.cooldown(1, 2)
     async def coinflip(self, interaction: discord.Interaction, aposta: int, escolha: str):
-        coins = await self.get_coins(interaction.user.id)
-        game = services.CoinFlipGame()
-        sucesso, resultado = game.play(escolha, aposta, coins)
+        casinoServices_result = await casinoServices.startCoinFlipGame(interaction.user.id, aposta, escolha)
+        embed = embeds.ganhou(casinoServices_result[1]["message"]) if casinoServices_result[0] else embeds.perdeu(casinoServices_result[1]["error"])
 
-        if not sucesso:
-            await interaction.response.send_message(
-                embed=embeds.erro(f"ops, algo deu errado\n{resultado}"), ephemeral=True
-            )
-            return
-
-        texto = f"🪙 Saiu **{resultado['resultado']}**!"
-
-        if resultado["venceu"]:
-            await self.add_coins(interaction.user.id, aposta)
-            embedresult = embeds.ganhou(f"{texto}\nVocê ganhou `{aposta}` coins!")
-        else:
-            await self.add_coins(interaction.user.id, -aposta)
-            embedresult = embeds.perdeu(f"{texto}\nVocê perdeu `{aposta}` coins.")
-
-        await interaction.response.send_message(embed=embedresult)
+        await interaction.response.send_message(embed=embed)
 
     @coinflip.error
     async def coinflip_error(self, interaction: discord.Interaction, error):
@@ -114,7 +98,7 @@ class Casino(commands.Cog):
             )
             return
 
-        (r1, r2, r3), ganho, tipo = services.SlotGame.spin_slots(aposta)
+        (r1, r2, r3), ganho, tipo = Games.SlotGame.spin_slots(aposta)
         resultado = f"{r1} | {r2} | {r3}\n"
 
         if tipo == "jackpot":
@@ -145,7 +129,7 @@ class Casino(commands.Cog):
             if aposta > coins:
                 return await interaction.followup.send("Você não tem coins suficientes.")
 
-            player, dealer = services.CardGame.start_game()
+            player, dealer = Games.CardGame.start_game()
 
             view = views.BlackjackView(player, dealer, interaction.user.id, aposta)
 

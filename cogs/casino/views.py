@@ -1,6 +1,6 @@
 import discord
 
-from .services import CardGame
+from .Games import CardGame
 from cogs.comercio import services as eco
 from Services.database import Coins, Infos
 

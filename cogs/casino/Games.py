@@ -1,19 +1,8 @@
-"""
-Regras dos jogos do casino, sem nenhuma dependência de Discord.
-
-Antes ``CardGame`` e ``SlotGame`` tinham métodos sem ``self`` nem
-``@staticmethod`` — funcionavam por acidente quando chamados como
-``CardGame.draw_card()``, mas ``views.py`` tentava chamá-los como
-``services.draw_card()`` (função de módulo, que nunca existiu) e isso
-quebrava o Blackjack em toda jogada. Agora os métodos são
-``@staticmethod`` de verdade e ``views.py`` foi corrigido para chamar
-``CardGame.draw_card()`` / ``CardGame.calculate_hand()``.
-"""
-
 import random
+import discord
+from cogs.casino import embeds
 
-
-class CardGame:
+class CardGame():
     """Regras de baralho usadas pelo Blackjack."""
 
     _NAIPES = ["♣️", "♠️", "♥️", "♦️"]
@@ -53,7 +42,7 @@ class CardGame:
         return player, dealer
 
 
-class SlotGame:
+class SlotGame():
     """Regras do caça-níquel."""
 
     _EMOJIS = ["🍒", "🍋", "🍉", "⭐", "💎", "💶", "🪙"]
@@ -81,30 +70,29 @@ class CoinFlipGame:
 
     OPCOES = ("cara", "coroa")
 
-    def play(self, escolha: str, aposta: int, coins: int) -> tuple[bool, dict | str]:
-        """Valida e resolve a jogada.
-
-        Retorna ``(True, dados)`` em caso de sucesso — onde ``dados`` tem
-        ``escolha``, ``aposta``, ``resultado`` e ``venceu`` — ou
-        ``(False, motivo)`` quando a jogada é inválida.
-        """
+    @classmethod
+    def play(cls, escolha: str):
         escolha = escolha.lower()
 
-        if escolha not in self.OPCOES:
-            return False, "escolha inválida (use `cara` ou `coroa`)"
-
-        if aposta <= 0:
-            return False, "A aposta deve ser maior que 0"
-
-        if aposta > coins:
-            return False, "Você não tem coins suficientes"
-
-        resultado = random.choice(self.OPCOES)
-        venceu = escolha == resultado
+        choice = random.choice(cls.OPCOES)
+        venceu = escolha == choice
 
         return True, {
             "escolha": escolha,
-            "aposta": aposta,
-            "resultado": resultado,
+            "resultado": choice,
             "venceu": venceu,
         }
+
+class DiceGame:
+    """Regras do jogo de dados."""
+
+    @staticmethod
+    def roll_dice() -> int:
+        """Rola um dado de 6 lados."""
+        return random.randint(1, 6)
+
+    @classmethod
+    def play(cls, aposta: int, escolha: int, coins: int) -> tuple[bool, dict | str]:
+
+        player_roll = cls.roll_dice()
+        bot_roll = cls.roll_dice()
